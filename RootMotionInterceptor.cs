@@ -1,27 +1,27 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Hunting {
+namespace DrivingOnNavMesh {
 
     public class RootMotionInterceptor {
         public const float E = 1e-2f;
         public const float SINGULAR_DOT = 1f - E;
 
-        Transform _tr;
-        Animator _anim;
+        protected Transform _tr;
+        protected Animator _anim;
 
-        bool _active;
-        Vector3 _destination;
+        protected bool _active;
+        protected Vector3 _destination;
 
-        float _masterPositionalPower;
-        float _forwardPositionalPower;
-        float _targetPositionalPower;
+        protected float _masterPositionalPower;
+        protected float _forwardPositionalPower;
+        protected float _targetPositionalPower;
 
-        float _masterRotationalPower;
-        float _forwardRotationalPower;
-        float _backwardRotationalPower;
+        protected float _masterRotationalPower;
+        protected float _forwardRotationalPower;
+        protected float _backwardRotationalPower;
 
-        float _crossRotationalPower;
+        protected float _crossRotationalPower;
 
         public RootMotionInterceptor(Animator anim, Transform tr) {
             this._tr = tr;
@@ -107,7 +107,7 @@ namespace Hunting {
             _tr.rotation = nextRot;
         }
 
-        static bool IsSingularWithUp (Vector3 view) {
+        protected static bool IsSingularWithUp (Vector3 view) {
             var dotUp = Vector3.Dot (Vector3.up, view);
             var singular = dotUp < -SINGULAR_DOT || SINGULAR_DOT < dotUp || view.sqrMagnitude < E;
             return singular;
