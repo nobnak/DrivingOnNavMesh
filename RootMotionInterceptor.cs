@@ -31,14 +31,14 @@ namespace DrivingOnNavMesh {
             this._crossRotationalPower = 0f;
         }
 
-        public RootMotionInterceptor SetTarget(Vector3 target) {
+        public virtual bool SetTarget(Vector3 target) {
             _active = true;
             _destination = target;
-            return this;
+            return true;
         }
-        public RootMotionInterceptor SetActive(bool active) {
+        public virtual bool SetActive(bool active) {
             _active = active;
-            return this;
+            return true;
         }
 
         public RootMotionInterceptor SetPositionalPower(Vector2 power) { return SetPositionalPower (power.x, power.y); }
@@ -69,14 +69,14 @@ namespace DrivingOnNavMesh {
         }
 
         public bool IsActive { get { return _active; } }
-        public Vector3 Destination { get { return _destination; } }
         public float SqrDistance { get { return View().sqrMagnitude; } }
         public float SqrDistanceLocal { get { return ViewLocal().sqrMagnitude; } }
 
-        public Vector3 View() { return _destination - _tr.position; }
-        public Vector3 ViewLocal() { return _tr.InverseTransformPoint(_destination); }
+        public virtual Vector3 Destination { get { return _destination; } }
+        public virtual Vector3 View() { return _destination - _tr.position; }
+        public virtual Vector3 ViewLocal() { return _tr.InverseTransformPoint(_destination); }
 
-        public void CallbackOnAnimatorMove() {
+        public virtual void CallbackOnAnimatorMove() {
             var nextPos = _anim.rootPosition;
             var nextRot = _anim.rootRotation;
 
