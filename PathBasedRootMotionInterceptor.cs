@@ -18,7 +18,7 @@ namespace DrivingOnNavMesh {
 
         #region Override
         public override bool SetTarget (Vector3 target) {
-             path.CalculatePath(_tr.position, target) && base.SetTarget (target);
+             return path.CalculatePath(_tr.position, target) && base.SetTarget (target);
         }
         #endregion
 
