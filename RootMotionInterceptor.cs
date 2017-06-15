@@ -4,6 +4,8 @@ using System.Collections;
 namespace DrivingOnNavMesh {
 
     public class RootMotionInterceptor {
+        public enum TargetStateEnum { None = 0, OnTheWay }
+
         public const float E = 1e-2f;
         public const float SINGULAR_DOT = 1f - E;
 
@@ -11,6 +13,7 @@ namespace DrivingOnNavMesh {
         protected Animator _anim;
 
         protected bool _active;
+        protected TargetStateEnum targetState;
         protected Vector3 _destination;
 
         protected float _masterPositionalPower;
@@ -29,16 +32,20 @@ namespace DrivingOnNavMesh {
             this._masterRotationalPower = 1f;
             this._masterPositionalPower = 0f;
             this._crossRotationalPower = 0f;
+
+            this._active = true;
         }
 
         public virtual bool SetTarget(Vector3 target) {
-            _active = true;
+            SetTargetState (TargetStateEnum.OnTheWay);
             _destination = target;
             return true;
         }
-        public virtual bool SetActive(bool active) {
+        public virtual void ResetTarget() {
+            SetTargetState (TargetStateEnum.None);
+        }
+        public virtual void SetActive(bool active) {
             _active = active;
-            return true;
         }
 
         public RootMotionInterceptor SetPositionalPower(Vector2 power) { return SetPositionalPower (power.x, power.y); }
@@ -69,6 +76,8 @@ namespace DrivingOnNavMesh {
         }
 
         public bool IsActive { get { return _active; } }
+        public bool ActiveAndValid { get { return _active && targetState == TargetStateEnum.OnTheWay; } }
+
         public float SqrDistance { get { return View().sqrMagnitude; } }
         public float SqrDistanceLocal { get { return ViewLocal().sqrMagnitude; } }
 
@@ -80,7 +89,7 @@ namespace DrivingOnNavMesh {
             var nextPos = _anim.rootPosition;
             var nextRot = _anim.rootRotation;
 
-            if (_active) {
+            if (ActiveAndValid) {
                 var dt = Time.deltaTime;
                 var view = View ();
                 view.y = 0f;
@@ -93,10 +102,10 @@ namespace DrivingOnNavMesh {
                     nextPos += _masterPositionalPower * dt * dpos;
                 }
 
-                if (_masterRotationalPower > 0f && !IsSingularWithUp(view)) {
+                if (_masterRotationalPower > 0f && !IsSingularWithUp (view)) {
                     var targetRotation = Quaternion.LookRotation (view, Vector3.up);
                     var t = Mathf.Lerp (_forwardRotationalPower, _backwardRotationalPower, 
-                        0.5f * (1f - Vector3.Dot (Vector3.forward, view)));
+                                0.5f * (1f - Vector3.Dot (Vector3.forward, view)));
                     var s = _masterPositionalPower * _crossRotationalPower;
                     var r = _masterRotationalPower * dt * (t + s);
                     nextRot = Quaternion.Slerp (nextRot, targetRotation, r);
@@ -111,6 +120,10 @@ namespace DrivingOnNavMesh {
             var dotUp = Vector3.Dot (Vector3.up, view);
             var singular = dotUp < -SINGULAR_DOT || SINGULAR_DOT < dotUp || view.sqrMagnitude < E;
             return singular;
+        }
+
+        protected virtual void SetTargetState(TargetStateEnum nextState) {
+            targetState = nextState;
         }
     }
 }
