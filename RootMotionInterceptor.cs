@@ -16,22 +16,12 @@ namespace DrivingOnNavMesh {
         protected TargetStateEnum targetState;
         protected Vector3 _destination;
 
-        protected float _masterPositionalPower;
-        protected float _forwardPositionalPower;
-        protected float _targetPositionalPower;
+        protected DrivingSetting settings;
 
-        protected float _masterRotationalPower;
-        protected float _forwardRotationalPower;
-        protected float _backwardRotationalPower;
-
-        protected float _crossRotationalPower;
-
-        public RootMotionInterceptor(Animator anim, Transform tr) {
+        public RootMotionInterceptor(Animator anim, Transform tr, DrivingSetting settings) {
             this._tr = tr;
             this._anim = anim;
-            this._masterRotationalPower = 1f;
-            this._masterPositionalPower = 0f;
-            this._crossRotationalPower = 0f;
+            this.settings = settings;
 
             this._active = true;
         }
@@ -46,33 +36,6 @@ namespace DrivingOnNavMesh {
         }
         public virtual void SetActive(bool active) {
             _active = active;
-        }
-
-        public RootMotionInterceptor SetPositionalPower(Vector2 power) { return SetPositionalPower (power.x, power.y); }
-        public RootMotionInterceptor SetPositionalPower(float forwardPower, float targetPower) {
-            _forwardPositionalPower = forwardPower;
-            _targetPositionalPower = targetPower;
-            return this;
-        }
-        public RootMotionInterceptor SetMasterPositionalPower(float power) {
-            _masterPositionalPower = power;
-            return this;
-        }
-
-        public RootMotionInterceptor SetRotationalPower(Vector2 power) { return SetRotationalPower (power.x, power.y); }
-        public RootMotionInterceptor SetRotationalPower(float forwardPower, float backwardPower) {
-            _forwardRotationalPower = Mathf.Max(0f, forwardPower);
-            _backwardRotationalPower = Mathf.Max(_forwardRotationalPower, backwardPower);
-            return this;
-        }
-        public RootMotionInterceptor SetMasterRotationalPower(float power) {
-            _masterRotationalPower = Mathf.Max(0f, power);
-            return this;
-        }
-
-        public RootMotionInterceptor SetCrossRotationalPower(float rotationalPower) {
-            _crossRotationalPower = rotationalPower;
-            return this;
         }
 
         public bool IsActive { get { return _active; } }
@@ -97,17 +60,17 @@ namespace DrivingOnNavMesh {
                 var forward = _tr.forward;
                 forward.y = 0f;
 
-                if (_masterPositionalPower > 0f) {
-                    var dpos = _forwardPositionalPower * forward + _targetPositionalPower * view.normalized;
-                    nextPos += _masterPositionalPower * dt * dpos;
+                if (settings.MasterPositionalPower > 0f) {
+                    var dpos = settings.ForwardPositionalPower * forward + settings.TargetPositionalPower * view.normalized;
+                    nextPos += settings.MasterPositionalPower * dt * dpos;
                 }
 
-                if (_masterRotationalPower > 0f && !IsSingularWithUp (view)) {
+                if (settings.MasterRotationalPower > 0f && !IsSingularWithUp (view)) {
                     var targetRotation = Quaternion.LookRotation (view, Vector3.up);
-                    var t = Mathf.Lerp (_forwardRotationalPower, _backwardRotationalPower, 
+                    var t = Mathf.Lerp (settings.ForwardRotationalPower, settings.BackwardRotationalPower, 
                                 0.5f * (1f - Vector3.Dot (Vector3.forward, view)));
-                    var s = _masterPositionalPower * _crossRotationalPower;
-                    var r = _masterRotationalPower * dt * (t + s);
+                    var s = settings.MasterPositionalPower * settings.CrossRotationalPower;
+                    var r = settings.MasterRotationalPower * dt * (t + s);
                     nextRot = Quaternion.Slerp (nextRot, targetRotation, r);
                 }
             }
@@ -124,6 +87,51 @@ namespace DrivingOnNavMesh {
 
         protected virtual void SetTargetState(TargetStateEnum nextState) {
             targetState = nextState;
+        }
+
+        public class DrivingSetting {
+            public float MasterPositionalPower { get; protected set; }
+            public float ForwardPositionalPower { get; protected set; }
+            public float TargetPositionalPower { get; protected set; }
+
+            public float MasterRotationalPower { get; protected set; }
+            public float ForwardRotationalPower { get; protected set; }
+            public float BackwardRotationalPower { get; protected set; }
+
+            public float CrossRotationalPower { get; protected set; }
+
+            public DrivingSetting() {
+                this.MasterRotationalPower = 1f;
+                this.MasterPositionalPower = 0f;
+                this.CrossRotationalPower = 0f;                
+            }
+
+            public DrivingSetting SetPositionalPower(Vector2 power) { return SetPositionalPower (power.x, power.y); }
+            public DrivingSetting SetPositionalPower(float forwardPower, float targetPower) {
+                ForwardPositionalPower = forwardPower;
+                TargetPositionalPower = targetPower;
+                return this;
+            }
+            public DrivingSetting SetMasterPositionalPower(float power) {
+                MasterPositionalPower = power;
+                return this;
+            }
+
+            public DrivingSetting SetRotationalPower(Vector2 power) { return SetRotationalPower (power.x, power.y); }
+            public DrivingSetting SetRotationalPower(float forwardPower, float backwardPower) {
+                ForwardRotationalPower = Mathf.Max(0f, forwardPower);
+                BackwardRotationalPower = Mathf.Max(ForwardRotationalPower, backwardPower);
+                return this;
+            }
+            public DrivingSetting SetMasterRotationalPower(float power) {
+                MasterRotationalPower = Mathf.Max(0f, power);
+                return this;
+            }
+
+            public DrivingSetting SetCrossRotationalPower(float rotationalPower) {
+                CrossRotationalPower = rotationalPower;
+                return this;
+            }            
         }
     }
 }

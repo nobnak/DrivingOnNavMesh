@@ -6,13 +6,13 @@ using UnityEngine.AI;
 namespace DrivingOnNavMesh {
 
     public class PathBasedRootMotionInterceptor : RootMotionInterceptor {
-        [SerializeField]
-        protected MotionData motionData;
-
+        protected DrivingAndPathSetting motionData;
         protected NavMeshPathGeometry path;
 
-        public PathBasedRootMotionInterceptor(Animator anim, Transform tr) : base(anim, tr) {
-            path = new NavMeshPathGeometry (new NavMeshPath ());
+        public PathBasedRootMotionInterceptor(Animator anim, Transform tr, DrivingAndPathSetting motionData)
+            : base(anim, tr, motionData) {
+            this.motionData = motionData;
+            this.path = new NavMeshPathGeometry (new NavMeshPath ());
         }
 
         #region Override
@@ -58,9 +58,7 @@ namespace DrivingOnNavMesh {
             SetTarget (center + moveBy);
         }
 
-        [System.Serializable]
-        public class MotionData {
-            [Header("Corner")]
+        public class DrivingAndPathSetting : RootMotionInterceptor.DrivingSetting {
             public float destinationDistance = 1f;
             public float pathFollowingAngleRatio = 0.1f;
             public float pathFollowingDistanceRatio = 0.5f;
