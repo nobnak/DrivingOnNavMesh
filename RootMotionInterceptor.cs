@@ -89,6 +89,7 @@ namespace DrivingOnNavMesh {
             targetState = nextState;
         }
 
+        [System.Serializable]
         public class DrivingSetting {
             public float MasterPositionalPower { get; protected set; }
             public float ForwardPositionalPower { get; protected set; }

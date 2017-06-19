@@ -102,9 +102,9 @@ namespace DrivingOnNavMesh {
             var indexBegin = activeRange.IndexBegin;
             var indexEnd = activeRange.IndexEnd;
 
-            var pfrom = PointAt (activeRange.ClampInRange(indexBegin));
+            var pfrom = PointAt (indexBegin);
             for (var i = indexBegin; i < indexEnd; i++) {
-                var pto = PointAt (activeRange.ClampInRange(i + i));
+                var pto = PointAt (i + i);
                 Gizmos.DrawLine (pfrom, pto);
                 pfrom = pto;
             }
