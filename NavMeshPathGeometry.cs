@@ -62,7 +62,7 @@ namespace DrivingOnNavMesh {
                 var tan = tangents [i + 1];
                 var len = lengths [i];
                 var t = Vector3.Dot (dir, tan) / len;
-                t = activeRange.ClampInRange (t, i);
+                t = activeRange.ClampInActive (t, i);
 
                 if (t <= 0f) {
                     t = 0f;
@@ -85,12 +85,12 @@ namespace DrivingOnNavMesh {
         public Vector3 PointAt(float t) {
             float tlerp;
             var tfloor = Floor (t, out tlerp);
-            return Lerp(path.corners, tfloor, tlerp);
+            return activeRange.Lerp(path.corners, tfloor, tlerp);
         }
         public Vector3 TangentAt(float t) {
             float tlerp;
             var tfloor = Floor (t + 0.5f, out tlerp);
-            return Lerp (tangents, tfloor, tlerp);
+            return activeRange.Lerp (tangents, tfloor, tlerp);
         }
         #endregion
 
@@ -99,11 +99,8 @@ namespace DrivingOnNavMesh {
             if (path.status == NavMeshPathStatus.PathInvalid)
                 return;
             
-            var indexBegin = activeRange.IndexBegin;
-            var indexEnd = activeRange.IndexEnd;
-
-            var pfrom = PointAt (indexBegin);
-            for (var i = indexBegin; i < indexEnd; i++) {
+            var pfrom = PointAt (activeRange.min);
+            for (var i = activeRange.min; i < activeRange.max; i++) {
                 var pto = PointAt (i + i);
                 Gizmos.DrawLine (pfrom, pto);
                 pfrom = pto;
@@ -116,16 +113,6 @@ namespace DrivingOnNavMesh {
             var tfloor = Mathf.FloorToInt (t);
             tlerp = t - tfloor;
             return tfloor;
-        }
-
-        protected Vector3 Lerp(IList<Vector3> array, int index, float tlerp) {
-            var count = array.Count;
-            if (index < 0)
-                return array [0];
-            else if (index <= (count - 2))
-                return Vector3.LerpUnclamped (array [index], array [index + 1], tlerp);
-            else
-                return array [count - 1];
         }
         #endregion
 
@@ -144,13 +131,13 @@ namespace DrivingOnNavMesh {
                 this.min = min;
                 this.max = max;
 
-                SetRange(min, max);
+                SetActiveRange(min, max);
             }
             public Range(int max) : this(0, max) {}
 
             public float Length { get { return ActiveRangeEnd - ActiveRangeBegin; } }
 
-            public void SetRange(float rangeBegin, float rangeEnd) {
+            public void SetActiveRange(float rangeBegin, float rangeEnd) {
                 ActiveRangeBegin = Mathf.Clamp(rangeBegin, min, max);
                 ActiveRangeEnd = Mathf.Clamp(rangeEnd, rangeBegin, max);
 
@@ -158,17 +145,32 @@ namespace DrivingOnNavMesh {
                 IndexEnd = Mathf.CeilToInt (ActiveRangeEnd);
             }
             public void SetRangeBegin(float begin) {
-                SetRange (begin, ActiveRangeEnd);
+                SetActiveRange (begin, ActiveRangeEnd);
             }
             public void SetRangeEnd(float end) {
-                SetRange(ActiveRangeBegin, end);
+                SetActiveRange(ActiveRangeBegin, end);
             }
 
-            public float ClampInRange (float t) {
+            public float ClampInActive (float t) {
                 return Mathf.Clamp (t, ActiveRangeBegin, ActiveRangeEnd);
             }
-            public float ClampInRange(float t, int index) {
-                return ClampInRange (t + index) - index;
+            public float ClampInActive(float t, int index) {
+                return ClampInActive (t + index) - index;
+            }
+
+            public float Clamp(float t) {
+                return Mathf.Clamp (t, min, max);
+            }
+            public int Clamp(int index) {
+                return Mathf.Clamp(index, min, max);
+            }
+            public Vector3 Lerp(IList<Vector3> array, int index, float tlerp) {
+                if (index < 0)
+                    return array [0];
+                else if (index < max)
+                    return Vector3.LerpUnclamped (array [index], array [index + 1], tlerp);
+                else
+                    return array [max];
             }
         }
         #endregion
