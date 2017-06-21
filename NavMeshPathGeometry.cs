@@ -101,7 +101,7 @@ namespace DrivingOnNavMesh {
             
             var pfrom = PointAt (activeRange.min);
             for (var i = activeRange.min; i < activeRange.max; i++) {
-                var pto = PointAt (i + i);
+                var pto = PointAt (i + 1);
                 Gizmos.DrawLine (pfrom, pto);
                 pfrom = pto;
             }
