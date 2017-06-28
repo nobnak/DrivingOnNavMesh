@@ -35,7 +35,7 @@ namespace DrivingOnNavMesh {
         AsyncOperation UpdateNavMesh(bool asyncOperation = false) {
             NavMeshSourceTag.Collect (ref sources);
             var setting = NavMesh.GetSettingsByID (0);
-            var bounds = new Bounds (Quantizer.Quantize (transform.position, size), size);
+            var bounds = new Bounds (Quantizer.Quantize (transform.position, 0.1f * size), size);
 
             if (asyncOperation) {
                 return NavMeshBuilder.UpdateNavMeshDataAsync (navMesh, setting, sources, bounds);
