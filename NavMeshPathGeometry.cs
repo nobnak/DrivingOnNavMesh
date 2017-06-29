@@ -41,7 +41,7 @@ namespace DrivingOnNavMesh {
             tangents [cornerCount] = tangents [cornerCount - 1];
         }
         public bool CalculatePath(Vector3 pointFrom, Vector3 pointTo, int area = NavMesh.AllAreas) {
-            var result = NavMesh.CalculatePath (pointFrom, pointTo, area, path);
+            var result = NavMesh.CalculatePath (pointFrom, pointTo, area, path = new NavMeshPath());
             if (result)
                 Build ();
             return result;
