@@ -11,15 +11,19 @@ namespace DrivingOnNavMesh {
 
         MeshFilter mf;
 
+        static bool tagsChanged = true;
         static List<NavMeshSourceTag> tags = new List<NavMeshSourceTag>();
 
+        #region Unity
         void OnEnable() {
             mf = GetMeshFilter ();
-            tags.Add (this);
+            Add ();
         }
         void OnDisable() {
-            tags.Remove (this);
+            Remove ();
         }
+        #endregion
+
         IEnumerable<NavMeshBuildSource> GetSources() {
             if (mf != null) {
                 var source = new NavMeshBuildSource ();
@@ -30,11 +34,32 @@ namespace DrivingOnNavMesh {
                 yield return source;
             }
         }
+        void Add() {
+            transform.hasChanged = true;
+            tagsChanged = true;
+            tags.Add (this);
+        }
+        void Remove() {
+            tagsChanged = true;
+            tags.Remove (this);
+        }
 
         public static void Collect(ref List<NavMeshBuildSource> list) {
             list.Clear ();
             foreach (var tag in tags)
                 list.AddRange (tag.GetSources ());
+        }
+        public static bool MakeUnchanged() {
+            var changed = tagsChanged;
+            tagsChanged = false;
+
+            foreach (var t in tags) {
+                var tr = t.transform;
+                tagsChanged = (tagsChanged ? tagsChanged : tr.hasChanged);
+                tr.hasChanged = false;
+            }
+
+            return changed;
         }
 
         bool TryGetMeshFilter(out MeshFilter mf) {

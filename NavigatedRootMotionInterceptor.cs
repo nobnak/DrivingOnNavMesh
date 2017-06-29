@@ -24,6 +24,7 @@ namespace DrivingOnNavMesh {
         }
 
         public virtual bool NavigateTo(Vector3 destination) {
+            AbortNavigation ();
             var result = path.CalculatePath (_tr.position, destination);
             if (result)
                 StartNavigation ();
@@ -62,7 +63,7 @@ namespace DrivingOnNavMesh {
             SetTarget (center + moveBy);
         }
         public void DrawPath() {
-            if (path != null || state != StateEnum.DuringNavigaion)
+            if (path != null || state == StateEnum.DuringNavigaion)
                 path.DrawGizmos();
         }
         public void DrawTarget() {
@@ -76,11 +77,10 @@ namespace DrivingOnNavMesh {
 
         #region Action
         protected virtual void StartNavigation() {
-            if (state != StateEnum.None)
-                AbortNavigation ();
-            
-            GotoNavigationState(StateEnum.DuringNavigaion);
-            NotifyNavigationStart ();
+            if (state == StateEnum.None) {
+                GotoNavigationState (StateEnum.DuringNavigaion);
+                NotifyNavigationStart ();
+            }
         }
         protected virtual void CompleteNavigation() {
             if (state == StateEnum.DuringNavigaion) {

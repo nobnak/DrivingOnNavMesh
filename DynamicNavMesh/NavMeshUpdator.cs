@@ -33,9 +33,14 @@ namespace DrivingOnNavMesh {
         #endregion
 
         AsyncOperation UpdateNavMesh(bool asyncOperation = false) {
+            if (!NavMeshSourceTag.MakeUnchanged ())
+                return null;
+            
             NavMeshSourceTag.Collect (ref sources);
             var setting = NavMesh.GetSettingsByID (0);
             var bounds = new Bounds (Quantizer.Quantize (transform.position, 0.1f * size), size);
+
+            Debug.Log ("Update NavMesh");
 
             if (asyncOperation) {
                 return NavMeshBuilder.UpdateNavMeshDataAsync (navMesh, setting, sources, bounds);
