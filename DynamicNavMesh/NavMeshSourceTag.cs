@@ -55,7 +55,8 @@ namespace DrivingOnNavMesh {
 
             foreach (var t in tags) {
                 var tr = t.transform;
-                tagsChanged = (tagsChanged ? tagsChanged : tr.hasChanged);
+                if (!changed)
+                    changed = tr.hasChanged;
                 tr.hasChanged = false;
             }
 
