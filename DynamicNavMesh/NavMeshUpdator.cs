@@ -13,7 +13,7 @@ namespace DrivingOnNavMesh {
         List<NavMeshBuildSource> sources;
         NavMeshData navMesh;
         NavMeshDataInstance navMeshInstance;
-
+        
         #region Unity
         void OnEnable() {
             sources = new List<NavMeshBuildSource> ();

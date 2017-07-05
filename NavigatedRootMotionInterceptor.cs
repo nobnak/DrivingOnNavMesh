@@ -6,6 +6,7 @@ using UnityEngine.AI;
 namespace DrivingOnNavMesh {
 
     public class NavigatedRootMotionInterceptor : RootMotionInterceptor {
+        const float RADIUS = 10f;
         public enum StateEnum { None = 0, DuringNavigaion }
 
         public event System.Action<NavigatedRootMotionInterceptor> NavigationStart;
@@ -23,9 +24,18 @@ namespace DrivingOnNavMesh {
             this.path = new NavMeshPathGeometry (new NavMeshPath ());
         }
 
-        public virtual bool NavigateTo(Vector3 destination) {
+        public virtual bool NavigateTo(Vector3 destination, bool findStart = true, bool findEnd = true) {
             AbortNavigation ();
-            var result = path.CalculatePath (_tr.position, destination);
+            var source = _tr.position;
+            if (findStart || findEnd) {
+                NavMeshHit hit;
+                var distance = RADIUS * _tr.lossyScale.sqrMagnitude;
+                if (findStart && NavMesh.SamplePosition (source, out hit, distance, NavMesh.AllAreas))
+                    source = hit.position;
+                if (findEnd && NavMesh.SamplePosition (destination, out hit, distance, NavMesh.AllAreas))
+                    destination = hit.position;
+            }
+            var result = path.CalculatePath (source, destination);
             if (result)
                 StartNavigation ();
             return result;
