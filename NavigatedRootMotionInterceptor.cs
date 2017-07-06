@@ -7,7 +7,7 @@ namespace DrivingOnNavMesh {
 
     public class NavigatedRootMotionInterceptor : RootMotionInterceptor {
         const float RADIUS = 10f;
-        public enum StateEnum { None = 0, DuringNavigaion }
+        public enum StateEnum { Idol = 0, Navigation }
 
         public event System.Action<NavigatedRootMotionInterceptor> NavigationStart;
         public event System.Action<NavigatedRootMotionInterceptor> NavigationComplete;
@@ -15,13 +15,13 @@ namespace DrivingOnNavMesh {
         public event System.Action<NavigatedRootMotionInterceptor> NavigationExit;
 
         protected DrivingAndPathSetting motionData;
-        protected NavMeshPathGeometry path;
+        protected NavMeshPathRouter path;
         protected StateEnum state;
 
         public NavigatedRootMotionInterceptor(Animator anim, Transform tr, DrivingAndPathSetting motionData)
             : base(anim, tr, motionData) {
             this.motionData = motionData;
-            this.path = new NavMeshPathGeometry (new NavMeshPath ());
+            this.path = new NavMeshPathRouter ();
         }
 
         public virtual bool NavigateTo(Vector3 destination, bool findStart = true, bool findEnd = true) {
@@ -35,17 +35,17 @@ namespace DrivingOnNavMesh {
                 if (findEnd && NavMesh.SamplePosition (destination, out hit, distance, NavMesh.AllAreas))
                     destination = hit.position;
             }
-            var result = path.CalculatePath (source, destination);
+            var result = path.TryToStartRoute (source, destination);
             if (result)
                 StartNavigation ();
             return result;
         }
     	public virtual void UpdateNavigation () {
-            if (state != StateEnum.DuringNavigaion)
+            if (state != StateEnum.Navigation)
                 return;
             
             var center = _tr.position;
-            var t = path.NearestCorner (center);
+            var t = path.ClosestT (center);
             if (t < 0f) {
                 AbortNavigation ();
                 return;
@@ -73,7 +73,7 @@ namespace DrivingOnNavMesh {
             SetTarget (center + moveBy);
         }
         public void DrawPath() {
-            if (path != null || state == StateEnum.DuringNavigaion)
+            if (path != null || state == StateEnum.Navigation)
                 path.DrawGizmos();
         }
         public void DrawTarget() {
@@ -87,22 +87,22 @@ namespace DrivingOnNavMesh {
 
         #region Action
         protected virtual void StartNavigation() {
-            if (state == StateEnum.None) {
-                GotoNavigationState (StateEnum.DuringNavigaion);
+            if (state == StateEnum.Idol) {
+                GotoNavigationState (StateEnum.Navigation);
                 NotifyNavigationStart ();
             }
         }
         protected virtual void CompleteNavigation() {
-            if (state == StateEnum.DuringNavigaion) {
-                GotoNavigationState(StateEnum.None);
+            if (state == StateEnum.Navigation) {
+                GotoNavigationState(StateEnum.Idol);
                 ResetTarget ();
                 NotifyNavigationComplete ();
                 NotifyNavigationExit ();
             }
         }
         protected virtual void AbortNavigation() {
-            if (state == StateEnum.DuringNavigaion) {
-                GotoNavigationState(StateEnum.None);
+            if (state == StateEnum.Navigation) {
+                GotoNavigationState(StateEnum.Idol);
                 ResetTarget ();
                 NotifyNavigationAbort ();
                 NotifyNavigationExit ();

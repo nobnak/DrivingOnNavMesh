@@ -5,59 +5,34 @@ using UnityEngine.AI;
 
 namespace DrivingOnNavMesh {
 
-    public class NavMeshPathGeometry {
-        protected NavMeshPath path;
+    public abstract class AbstractRouter {
+        public enum RouteStateEnum { Invalid = 0, Reacheable }
 
+        protected RouteStateEnum state;
+
+        protected Vector3[] corners;
         protected Vector3[] tangents;
         protected float[] lengths;
 
         protected Range activeRange;
 
-        public NavMeshPathGeometry(NavMeshPath path) {
-            this.path = path;
-        }
-
-        #region Public
-        public NavMeshPath Path { get { return path; } }
-        public Range ActiveRange { get { return activeRange; } }
-
-        #region Calculate Path
-        public void Build() {
-            Debug.Log ("Build NavMesh Geomatry");
-            var cornerCount = path.corners.Length;
-
-            activeRange = new Range(cornerCount - 1);
-
-            tangents = new Vector3[cornerCount + 1];
-            lengths = new float[cornerCount - 1];
-            for (var i = 0; i < cornerCount - 1; i++) {
-                var ca = path.corners [i];
-                var cb = path.corners [i + 1];
-                var v = cb - ca;
-                lengths [i] = v.magnitude;
-                tangents [i + 1] = v.normalized;
-            }
-            tangents [0] = tangents [1];
-            tangents [cornerCount] = tangents [cornerCount - 1];
-        }
-        public bool CalculatePath(Vector3 pointFrom, Vector3 pointTo, int area = NavMesh.AllAreas) {
-            var result = NavMesh.CalculatePath (pointFrom, pointTo, area, path = new NavMeshPath());
-            if (result)
-                Build ();
-            return result;
-        }
+        #region Abstract
+        public abstract bool TryToStartRoute (Vector3 pointFrom, Vector3 pointTo);
         #endregion
 
-        public float NearestCorner(Vector3 p) {
+        #region Public
+        public virtual Range ActiveRange { get { return activeRange; } }
+
+        public virtual float ClosestT(Vector3 p) {
             var minSqrDist = float.MaxValue;
-            var minCorner = -1f;
+            var minT = -1f;
             var indexBegin = activeRange.IndexBegin;
             var indexEnd = activeRange.IndexEnd;
 
             for (var i = indexBegin; i < indexEnd; i++) {
                 var inext = Mathf.Min (i + 1, indexEnd);
 
-                var c = path.corners [i];
+                var c = corners [i];
                 var dir = p - c;
                 var tan = tangents [i + 1];
                 var len = lengths [i];
@@ -67,27 +42,27 @@ namespace DrivingOnNavMesh {
                 if (t <= 0f) {
                     t = 0f;
                 } else if (t < 1f) {
-                    c = Vector3.Lerp (c, path.corners [inext], t);
+                    c = Vector3.Lerp (c, corners [inext], t);
                 } else {
                     t = 1f;
-                    c = path.corners [inext];
+                    c = corners [inext];
                 }
 
                 var tentativeSqrDist = (p - c).sqrMagnitude;
                 if (tentativeSqrDist < minSqrDist) {
                     minSqrDist = tentativeSqrDist;
-                    minCorner = t + i;
+                    minT = t + i;
                 }
             }
 
-            return minCorner;
+            return minT;
         }
-        public Vector3 PointAt(float t) {
+        public virtual Vector3 PointAt(float t) {
             float tlerp;
             var tfloor = Floor (t, out tlerp);
-            return activeRange.Lerp(path.corners, tfloor, tlerp);
+            return activeRange.Lerp(corners, tfloor, tlerp);
         }
-        public Vector3 TangentAt(float t) {
+        public virtual Vector3 TangentAt(float t) {
             float tlerp;
             var tfloor = Floor (t + 0.5f, out tlerp);
             return activeRange.Lerp (tangents, tfloor, tlerp);
@@ -95,8 +70,8 @@ namespace DrivingOnNavMesh {
         #endregion
 
         #region Gizmo
-        public void DrawGizmos() {
-            if (path.status == NavMeshPathStatus.PathInvalid)
+        public virtual void DrawGizmos() {
+            if (state == RouteStateEnum.Invalid)
                 return;
             
             var pfrom = PointAt (activeRange.min);
@@ -109,6 +84,30 @@ namespace DrivingOnNavMesh {
         #endregion
 
         #region Protected
+        protected virtual void SetRouteState(RouteStateEnum nextState) {
+            state = nextState;
+        }
+        #endregion
+
+        #region Static
+        protected static void Build(Vector3[] corners, 
+            out Range activeRange, out Vector3[] tangents, out float[] lengths) {
+            var cornerCount = corners.Length;
+
+            activeRange = new Range(cornerCount - 1);
+            tangents = new Vector3[cornerCount + 1];
+            lengths = new float[cornerCount - 1];
+
+            for (var i = 0; i < cornerCount - 1; i++) {
+                var ca = corners [i];
+                var cb = corners [i + 1];
+                var v = cb - ca;
+                lengths [i] = v.magnitude;
+                tangents [i + 1] = v.normalized;
+            }
+            tangents [0] = tangents [1];
+            tangents [cornerCount] = tangents [cornerCount - 1];
+        }
         protected static int Floor (float t, out float tlerp) {
             var tfloor = Mathf.FloorToInt (t);
             tlerp = t - tfloor;
