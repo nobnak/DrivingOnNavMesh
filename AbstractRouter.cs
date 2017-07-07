@@ -10,15 +10,25 @@ namespace DrivingOnNavMesh {
 
         protected RouteStateEnum state;
 
-        protected Vector3[] corners;
+        protected Vector3[] path;
         protected Vector3[] tangents;
         protected float[] lengths;
 
         protected Range activeRange;
 
         #region Abstract
-        public abstract bool TryToStartRoute (Vector3 pointFrom, Vector3 pointTo);
+        protected abstract bool TryToFindPath(Vector3 pointFrom, Vector3 pointTo, out Vector3[] path);
         #endregion
+
+        public virtual bool TryToStartRoute (Vector3 pointFrom, Vector3 pointTo) {
+            var result = TryToFindPath (pointFrom, pointTo, out path);
+            if (result) {
+                SetRouteState (RouteStateEnum.Reacheable);
+                Build (path, out activeRange, out tangents, out lengths);
+            } else
+                SetRouteState (RouteStateEnum.Invalid);
+            return result;
+        }
 
         #region Public
         public virtual Range ActiveRange { get { return activeRange; } }
@@ -32,7 +42,7 @@ namespace DrivingOnNavMesh {
             for (var i = indexBegin; i < indexEnd; i++) {
                 var inext = Mathf.Min (i + 1, indexEnd);
 
-                var c = corners [i];
+                var c = path [i];
                 var dir = p - c;
                 var tan = tangents [i + 1];
                 var len = lengths [i];
@@ -42,10 +52,10 @@ namespace DrivingOnNavMesh {
                 if (t <= 0f) {
                     t = 0f;
                 } else if (t < 1f) {
-                    c = Vector3.Lerp (c, corners [inext], t);
+                    c = Vector3.Lerp (c, path [inext], t);
                 } else {
                     t = 1f;
-                    c = corners [inext];
+                    c = path [inext];
                 }
 
                 var tentativeSqrDist = (p - c).sqrMagnitude;
@@ -60,7 +70,7 @@ namespace DrivingOnNavMesh {
         public virtual Vector3 PointAt(float t) {
             float tlerp;
             var tfloor = Floor (t, out tlerp);
-            return activeRange.Lerp(corners, tfloor, tlerp);
+            return activeRange.Lerp(path, tfloor, tlerp);
         }
         public virtual Vector3 TangentAt(float t) {
             float tlerp;

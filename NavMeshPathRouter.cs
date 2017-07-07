@@ -6,22 +6,17 @@ using UnityEngine.AI;
 namespace DrivingOnNavMesh {
 
     public class NavMeshPathRouter : AbstractRouter {
-        protected NavMeshPath path;
+        protected NavMeshPath navPath;
 
         #region implemented abstract members of AbstractRouter
-        public override bool TryToStartRoute (Vector3 pointFrom, Vector3 pointTo) {
-            return TryToStartRoute (pointFrom, pointTo, NavMesh.AllAreas);
+        protected override bool TryToFindPath (Vector3 pointFrom, Vector3 pointTo, out Vector3[] path) {
+            return TryToFindPath (pointFrom, pointTo, out path, NavMesh.AllAreas);
         }
         #endregion
 
-        public virtual bool TryToStartRoute(Vector3 pointFrom, Vector3 pointTo, int area) {
-            var result = NavMesh.CalculatePath (pointFrom, pointTo, area, path = new NavMeshPath());
-            if (result) {
-                SetRouteState (RouteStateEnum.Reacheable);
-                Build (corners = path.corners, out activeRange, out tangents, out lengths);
-            } else
-                SetRouteState (RouteStateEnum.Invalid);
-                
+        protected virtual bool TryToFindPath(Vector3 pointFrom, Vector3 pointTo, out Vector3[] path, int area) {
+            var result = NavMesh.CalculatePath (pointFrom, pointTo, area, navPath = new NavMeshPath());
+            path = navPath.corners;
             return result;
         }
     }
