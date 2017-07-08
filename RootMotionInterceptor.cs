@@ -28,14 +28,14 @@ namespace DrivingOnNavMesh {
 
         public virtual bool SetTarget(Vector3 target) {
             SetTargetState (TargetStateEnum.OnTheWay);
-            target = target;
+            this.target = target;
             return true;
         }
         public virtual void ResetTarget() {
             SetTargetState (TargetStateEnum.None);
         }
         public virtual void SetActive(bool active) {
-            activity = active;
+            this.activity = active;
         }
 
         public bool IsActive { get { return activity; } }
