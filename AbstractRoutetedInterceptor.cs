@@ -39,7 +39,7 @@ namespace DrivingOnNavMesh {
             if (state != StateEnum.Navigation)
                 return;
 
-            var pointFrom = _tr.position;
+            var pointFrom = tr.position;
             var t = router.ClosestT (pointFrom);
             if (t < 0f) {
                 AbortNavigation ();
@@ -61,7 +61,7 @@ namespace DrivingOnNavMesh {
         }
         public void DrawTarget() {
             if (ActiveAndValid)
-                Gizmos.DrawLine (_tr.position, Destination);
+                Gizmos.DrawLine (tr.position, CurrentTarget);
         }
 
         protected virtual void GotoNavigationState(StateEnum nextState) {

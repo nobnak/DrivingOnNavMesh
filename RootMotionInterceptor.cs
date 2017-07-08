@@ -9,55 +9,55 @@ namespace DrivingOnNavMesh {
         public const float E = 1e-2f;
         public const float SINGULAR_DOT = 1f - E;
 
-        protected Transform _tr;
-        protected Animator _anim;
+        protected Transform tr;
+        protected Animator anim;
 
-        protected bool _active;
+        protected bool activity;
         protected TargetStateEnum targetState;
-        protected Vector3 _destination;
+        protected Vector3 target;
 
         protected DrivingSetting settings;
 
         public RootMotionInterceptor(Animator anim, Transform tr, DrivingSetting settings) {
-            this._tr = tr;
-            this._anim = anim;
+            this.tr = tr;
+            this.anim = anim;
             this.settings = settings;
 
-            this._active = true;
+            this.activity = true;
         }
 
         public virtual bool SetTarget(Vector3 target) {
             SetTargetState (TargetStateEnum.OnTheWay);
-            _destination = target;
+            target = target;
             return true;
         }
         public virtual void ResetTarget() {
             SetTargetState (TargetStateEnum.None);
         }
         public virtual void SetActive(bool active) {
-            _active = active;
+            activity = active;
         }
 
-        public bool IsActive { get { return _active; } }
-        public bool ActiveAndValid { get { return _active && targetState == TargetStateEnum.OnTheWay; } }
+        public bool IsActive { get { return activity; } }
+        public bool ActiveAndValid { get { return activity && targetState == TargetStateEnum.OnTheWay; } }
 
         public float SqrDistance { get { return View().sqrMagnitude; } }
         public float SqrDistanceLocal { get { return ViewLocal().sqrMagnitude; } }
 
-        public virtual Vector3 Destination { get { return _destination; } }
-        public virtual Vector3 View() { return _destination - _tr.position; }
-        public virtual Vector3 ViewLocal() { return _tr.InverseTransformPoint(_destination); }
+        public virtual Vector3 CurrentTarget { get { return target; } }
+        public virtual Vector3 View() { return target - tr.position; }
+        public virtual Vector3 ViewLocal() { return tr.InverseTransformPoint(target); }
 
         public virtual void CallbackOnAnimatorMove() {
-            var nextPos = _anim.rootPosition;
-            var nextRot = _anim.rootRotation;
+            var nextPos = anim.rootPosition;
+            var nextRot = anim.rootRotation;
 
             if (ActiveAndValid) {
                 var dt = Time.deltaTime;
                 var view = View ();
                 view.y = 0f;
 
-                var forward = _tr.forward;
+                var forward = tr.forward;
                 forward.y = 0f;
 
                 if (settings.MasterPositionalPower > 0f) {
@@ -75,8 +75,8 @@ namespace DrivingOnNavMesh {
                 }
             }
 
-            _tr.position = nextPos;
-            _tr.rotation = nextRot;
+            tr.position = nextPos;
+            tr.rotation = nextRot;
         }
 
         protected static bool IsSingularWithUp (Vector3 view) {

@@ -14,7 +14,7 @@ namespace DrivingOnNavMesh {
 
         #region implemented abstract members of AbstractRoutetedInterceptor
         protected override bool TryToStartNavigationTo(Vector3 destination) {
-            var source = _tr.position;
+            var source = tr.position;
             this.destination = destination;
             return router.TryToStartRoute (source, destination);
         }
