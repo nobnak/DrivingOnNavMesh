@@ -35,24 +35,25 @@ namespace DrivingOnNavMesh {
                 StartNavigation ();
             return result;
         }
-        public virtual void UpdateNavigation () {
+        public virtual bool UpdateNavigation () {
             if (state != StateEnum.Navigation)
-                return;
+                return false;
 
             var pointFrom = tr.position;
             var t = router.ClosestT (pointFrom);
             if (t < 0f) {
                 AbortNavigation ();
-                return;
+                return false;
             }
 
             router.ActiveRange.SetRangeBegin (t);
             if (router.ActiveRange.Length <= Mathf.Epsilon) {
                 CompleteNavigation ();
-                return;
+                return false;
             }
 
             UpdateTarget (pointFrom, t);
+            return true;
         }
 
         public void DrawPath() {
@@ -63,6 +64,7 @@ namespace DrivingOnNavMesh {
             if (ActiveAndValid)
                 Gizmos.DrawLine (tr.position, CurrentTarget);
         }
+        public StateEnum CurrentState { get { return state; } }
 
         protected virtual void GotoNavigationState(StateEnum nextState) {
             state = nextState;
