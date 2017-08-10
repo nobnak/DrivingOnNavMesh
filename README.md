@@ -1,3 +1,3 @@
 # DrivingOnNavMesh
 
-[![Thumbnail](http://img.youtube.com/vi/vTzpLTaRIEc/0.jpg)](https://youtu.be/vTNtW2akkCo)
+[![Thumbnail](http://img.youtube.com/vi/b8WxX5rKcgk/0.jpg)](https://youtu.be/b8WxX5rKcgk)
