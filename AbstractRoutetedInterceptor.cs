@@ -55,6 +55,9 @@ namespace DrivingOnNavMesh {
             UpdateTarget (pointFrom, t);
             return true;
         }
+        public virtual void ClearNavigation() {
+            AbortNavigation();
+        }
 
         public void DrawPath() {
             if (router != null || state == StateEnum.Navigation)
