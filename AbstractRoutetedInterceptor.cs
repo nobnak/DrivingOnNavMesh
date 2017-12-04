@@ -28,6 +28,12 @@ namespace DrivingOnNavMesh {
         protected abstract void UpdateTarget (Vector3 pointFrom, float t);
         #endregion
 
+        public virtual void SetActive(bool active, bool clear = true) {
+            if (clear)
+                AbortNavigation();
+            base.SetActive(active);
+        }
+
         public virtual bool NavigateTo(Vector3 destination) {
             AbortNavigation ();
             var result = TryToStartNavigationTo (destination);
