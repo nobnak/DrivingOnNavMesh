@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -41,7 +41,7 @@ namespace DrivingOnNavMesh {
                 StartNavigation ();
             return result;
         }
-        public virtual bool UpdateNavigation () {
+        public virtual bool Update () {
             if (state != StateEnum.Navigation)
                 return false;
 
@@ -61,7 +61,7 @@ namespace DrivingOnNavMesh {
             UpdateTarget (pointFrom, t);
             return true;
         }
-        public virtual void ClearNavigation() {
+        public virtual void Abort() {
             AbortNavigation();
         }
 
