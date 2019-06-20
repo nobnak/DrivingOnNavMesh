@@ -17,6 +17,8 @@ namespace DrivingOnNavMesh {
         protected StateEnum state;
         protected AbstractRouter router;
 
+		protected float acceptableRemainingRatio = 0.05f;
+
         public AbstractRoutetedInterceptor(
             Animator anim, Transform tr, DrivingSetting drivingSetting, AbstractRouter router)
              : base(anim, tr, drivingSetting) {
@@ -28,6 +30,14 @@ namespace DrivingOnNavMesh {
         protected abstract void UpdateTarget (Vector3 pointFrom, float t);
         #endregion
 
+		public virtual Vector3 CurrentDestination { get; protected set; }
+		public virtual float AcceptableRemainingRatio {
+			get { return acceptableRemainingRatio; }
+			set {
+				if (0f <= value && value <= 1f)
+					acceptableRemainingRatio = value;
+			}
+		}
         public virtual void SetActive(bool active, bool clear = true) {
             if (clear)
                 AbortNavigation();
@@ -37,8 +47,10 @@ namespace DrivingOnNavMesh {
         public virtual bool NavigateTo(Vector3 destination) {
             AbortNavigation ();
             var result = TryToStartNavigationTo (destination);
-            if (result)
-                StartNavigation ();
+			if (result) {
+				CurrentDestination = destination;
+				StartNavigation();
+			}
             return result;
         }
         public virtual bool Update () {
@@ -46,14 +58,15 @@ namespace DrivingOnNavMesh {
                 return false;
 
             var pointFrom = tr.position;
-            var t = router.ClosestT (pointFrom);
+			var t = router.ClosestT(pointFrom);
+			t = Mathf.Max(t, router.ActiveRange.ActiveRangeBegin);
             if (t < 0f) {
                 AbortNavigation ();
                 return false;
             }
 
             router.ActiveRange.SetRangeBegin (t);
-            if (router.ActiveRange.Length <= Mathf.Epsilon) {
+            if (router.ActiveRange.Length <= Mathf.Epsilon || (t + acceptableRemainingRatio) >= 1f) {
                 CompleteNavigation ();
                 return false;
             }
