@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace DrivingOnNavMesh {
@@ -53,7 +53,7 @@ namespace DrivingOnNavMesh {
             var nextRot = anim.rootRotation;
 
             if (ActiveAndValid) {
-                var dt = Time.deltaTime;
+                var dt = Time.deltaTime * anim.speed;
                 var view = View ();
                 view.y = 0f;
 
