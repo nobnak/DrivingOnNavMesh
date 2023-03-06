@@ -14,11 +14,12 @@ namespace DrivingOnNavMesh {
         #region implemented abstract members of AbstractRoutetedInterceptor
         protected override bool TryToStartNavigationTo(Vector3 destination) {
             var source = tr.position;
-            this.CurrentDestination = destination;
-            return router.TryToStartRoute (source, destination);
+            var result = router.TryToStartRoute (source, destination);
+			if (result) SetDestination(destination);
+			return result;
         }
         protected override void UpdateTarget (Vector3 pointFrom, float t) {
-            SetTarget (CurrentDestination);
+            //SetDestination (CurrentDestination);
         }
         #endregion
     }

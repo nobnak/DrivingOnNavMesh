@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -43,7 +43,7 @@ namespace DrivingOnNavMesh {
                 var mixRatio = Mathf.Clamp01 (Mathf.Lerp (distantialRatio, angularRatio, angle));
                 moveBy = motionData.DestinationDistance * Vector3.Lerp (tangentOn, toPointDir, mixRatio);
             }
-            SetTarget (pointFrom + moveBy);
+            SetDestination (pointFrom + moveBy);
         }
 
         #endregion
