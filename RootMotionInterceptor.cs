@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace DrivingOnNavMesh {
@@ -14,7 +14,7 @@ namespace DrivingOnNavMesh {
 
         protected bool activity;
         protected TargetStateEnum targetState;
-        protected Vector3 target;
+		protected Vector3 heading;
 
         protected DrivingSetting settings;
 
@@ -26,14 +26,11 @@ namespace DrivingOnNavMesh {
             this.activity = true;
         }
 
-        public virtual bool SetTarget(Vector3 target) {
-            SetTargetState (TargetStateEnum.OnTheWay);
-            this.target = target;
-            return true;
-        }
-        public virtual void ResetTarget() {
-            SetTargetState (TargetStateEnum.None);
-        }
+		public virtual void SetHeading(Vector3 heading) {
+			SetTargetState(TargetStateEnum.OnTheWay);
+			heading.y = 0f;
+			heading.Normalize();
+		}
         public virtual void SetActive(bool active) {
             this.activity = active;
         }
@@ -41,12 +38,8 @@ namespace DrivingOnNavMesh {
         public bool IsActive { get { return activity; } }
         public bool ActiveAndValid { get { return activity && targetState == TargetStateEnum.OnTheWay; } }
 
-        public float SqrDistance { get { return View().sqrMagnitude; } }
-        public float SqrDistanceLocal { get { return ViewLocal().sqrMagnitude; } }
-
-        public virtual Vector3 CurrentTarget { get { return target; } }
-        public virtual Vector3 View() { return target - tr.position; }
-        public virtual Vector3 ViewLocal() { return tr.InverseTransformPoint(target); }
+        public virtual Vector3 Heading() { return heading; }
+        public virtual Vector3 HeadingLocal() { return tr.InverseTransformDirection(heading); }
 
         public virtual void CallbackOnAnimatorMove() {
             var nextPos = anim.rootPosition;
@@ -54,7 +47,7 @@ namespace DrivingOnNavMesh {
 
             if (ActiveAndValid) {
                 var dt = Time.deltaTime;
-                var view = View ();
+                var view = Heading ();
                 view.y = 0f;
 
                 var forward = tr.forward;

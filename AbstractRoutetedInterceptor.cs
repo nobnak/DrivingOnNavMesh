@@ -16,6 +16,7 @@ namespace DrivingOnNavMesh {
 
         protected StateEnum state;
         protected AbstractRouter router;
+		protected Vector3 destination;
 
 		protected float acceptableRemainingRatio = 0.05f;
 
@@ -28,9 +29,19 @@ namespace DrivingOnNavMesh {
         #region Abstract
         protected abstract bool TryToStartNavigationTo (Vector3 destination);
         protected abstract void UpdateTarget (Vector3 pointFrom, float t);
-        #endregion
+		#endregion
 
-		public virtual Vector3 CurrentDestination { get; protected set; }
+		public virtual Vector3 CurrentDestination => destination;
+		public virtual bool SetDestination(Vector3 destination) {
+			this.destination = destination;
+			var heading = destination - tr.position;
+			SetHeading(heading);
+			return true;
+		}
+		public virtual void ResetTarget() {
+			SetTargetState(TargetStateEnum.None);
+		}
+
 		public virtual float AcceptableRemainingRatio {
 			get { return acceptableRemainingRatio; }
 			set {
@@ -48,7 +59,7 @@ namespace DrivingOnNavMesh {
             AbortNavigation ();
             var result = TryToStartNavigationTo (destination);
 			if (result) {
-				CurrentDestination = destination;
+				SetDestination(destination);
 				StartNavigation();
 			}
             return result;
@@ -84,7 +95,7 @@ namespace DrivingOnNavMesh {
         }
         public void DrawTarget() {
             if (ActiveAndValid)
-                Gizmos.DrawLine (tr.position, CurrentTarget);
+                Gizmos.DrawLine (tr.position, CurrentDestination);
         }
         public StateEnum CurrentState { get { return state; } }
 
