@@ -30,6 +30,7 @@ namespace DrivingOnNavMesh {
 			SetTargetState(TargetStateEnum.OnTheWay);
 			heading.y = 0f;
 			heading.Normalize();
+			this.heading = heading;
 		}
         public virtual void SetActive(bool active) {
             this.activity = active;
@@ -53,7 +54,7 @@ namespace DrivingOnNavMesh {
                 forward.y = 0f;
 
                 if (settings.MasterPositionalPower > 0f) {
-                    var dpos = settings.ForwardPositionalPower * forward + settings.TargetPositionalPower * view.normalized;
+                    var dpos = settings.ForwardPositionalPower * forward + settings.TargetPositionalPower * view;
                     nextPos += settings.MasterPositionalPower * dt * dpos;
                 }
 
