@@ -5,7 +5,7 @@ using UnityEngine.AI;
 
 namespace DrivingOnNavMesh {
 
-    public abstract class AbstractRoutetedInterceptor : RootMotionInterceptor {
+    public abstract class AbstractRoutetedInterceptor {
         public const float RADIUS = 10f;
         public enum StateEnum { Idol = 0, Navigation }
 
@@ -14,15 +14,16 @@ namespace DrivingOnNavMesh {
         public event System.Action<AbstractRoutetedInterceptor> NavigationAbort;
         public event System.Action<AbstractRoutetedInterceptor> NavigationExit;
 
-        protected StateEnum state;
+		protected RootMotionInterceptor rootMotion;
+
+		protected StateEnum state;
         protected AbstractRouter router;
 		protected Vector3 destination;
 
 		protected float acceptableRemainingRatio = 0.05f;
 
-        public AbstractRoutetedInterceptor(
-            Animator anim, Transform tr, DrivingSetting drivingSetting, AbstractRouter router)
-             : base(anim, tr, drivingSetting) {
+        public AbstractRoutetedInterceptor(RootMotionInterceptor rootMotion, AbstractRouter router) {
+			this.rootMotion = rootMotion;
             this.router = router;
         }
 
@@ -34,12 +35,9 @@ namespace DrivingOnNavMesh {
 		public virtual Vector3 CurrentDestination => destination;
 		public virtual bool SetDestination(Vector3 destination) {
 			this.destination = destination;
-			var heading = destination - tr.position;
-			SetHeading(heading);
+			var heading = destination - rootMotion.Tr.position;
+			rootMotion.SetHeading(heading);
 			return true;
-		}
-		public virtual void ResetTarget() {
-			SetTargetState(TargetStateEnum.None);
 		}
 
 		public virtual float AcceptableRemainingRatio {
@@ -49,14 +47,15 @@ namespace DrivingOnNavMesh {
 					acceptableRemainingRatio = value;
 			}
 		}
+
+		public virtual bool IsActive => rootMotion.IsActive;
         public virtual void SetActive(bool active, bool clear = true) {
             if (clear)
                 AbortNavigation();
-            base.SetActive(active);
+			rootMotion.SetActive(active);
         }
 
         public virtual bool NavigateTo(Vector3 destination) {
-            AbortNavigation ();
             var result = TryToStartNavigationTo (destination);
 			if (result) {
 				SetDestination(destination);
@@ -68,7 +67,7 @@ namespace DrivingOnNavMesh {
             if (state != StateEnum.Navigation)
                 return false;
 
-            var pointFrom = tr.position;
+            var pointFrom = rootMotion.Tr.position;
 			var t = router.ClosestT(pointFrom);
 			t = Mathf.Max(t, router.ActiveRange.ActiveRangeBegin);
             if (t < 0f) {
@@ -94,8 +93,8 @@ namespace DrivingOnNavMesh {
                 router.DrawGizmos();
         }
         public void DrawTarget() {
-            if (ActiveAndValid)
-                Gizmos.DrawLine (tr.position, CurrentDestination);
+            if (rootMotion.IsActive)
+                Gizmos.DrawLine (rootMotion.Tr.position, CurrentDestination);
         }
         public StateEnum CurrentState { get { return state; } }
 
@@ -105,15 +104,14 @@ namespace DrivingOnNavMesh {
 
         #region Action
         protected virtual void StartNavigation() {
-            if (state == StateEnum.Idol) {
-                GotoNavigationState (StateEnum.Navigation);
-                NotifyNavigationStart ();
-            }
+			GotoNavigationState (StateEnum.Navigation);
+			rootMotion.SetActive(true);
+			NotifyNavigationStart ();
         }
         protected virtual void CompleteNavigation() {
             if (state == StateEnum.Navigation) {
                 GotoNavigationState(StateEnum.Idol);
-                ResetTarget ();
+                rootMotion.SetActive (false);
                 NotifyNavigationComplete ();
                 NotifyNavigationExit ();
             }
@@ -121,8 +119,8 @@ namespace DrivingOnNavMesh {
         protected virtual void AbortNavigation() {
             if (state == StateEnum.Navigation) {
                 GotoNavigationState(StateEnum.Idol);
-                ResetTarget ();
-                NotifyNavigationAbort ();
+				rootMotion.SetActive(false);
+				NotifyNavigationAbort ();
                 NotifyNavigationExit ();
             }
         }

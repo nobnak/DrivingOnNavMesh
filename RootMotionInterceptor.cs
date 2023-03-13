@@ -9,7 +9,6 @@ namespace DrivingOnNavMesh {
         public const float E = 1e-2f;
         public const float SINGULAR_DOT = 1f - E;
 
-        protected Transform tr;
         protected Animator anim;
 
         protected bool activity;
@@ -19,7 +18,7 @@ namespace DrivingOnNavMesh {
         protected DrivingSetting settings;
 
         public RootMotionInterceptor(Animator anim, Transform tr, DrivingSetting settings) {
-            this.tr = tr;
+            this.Tr = tr;
             this.anim = anim;
             this.settings = settings;
 
@@ -27,7 +26,6 @@ namespace DrivingOnNavMesh {
         }
 
 		public virtual void SetHeading(Vector3 heading) {
-			SetTargetState(TargetStateEnum.OnTheWay);
 			heading.y = 0f;
 			heading.Normalize();
 			this.heading = heading;
@@ -36,21 +34,21 @@ namespace DrivingOnNavMesh {
             this.activity = active;
         }
 
-        public bool IsActive { get { return activity; } }
-        public bool ActiveAndValid { get { return activity && targetState == TargetStateEnum.OnTheWay; } }
+		public Transform Tr { get; protected set; }
+		public bool IsActive { get { return activity; } }
 
         public virtual Vector3 Heading() { return heading; }
-        public virtual Vector3 HeadingLocal() { return tr.InverseTransformDirection(heading); }
+        public virtual Vector3 HeadingLocal() { return Tr.InverseTransformDirection(heading); }
 
         public virtual void CallbackOnAnimatorMove() {
             var nextPos = anim.rootPosition;
             var nextRot = anim.rootRotation;
 
-            if (ActiveAndValid) {
+            if (IsActive) {
                 var dt = Time.deltaTime * anim.speed;
                 var view = Heading ();
 
-                var forward = tr.forward;
+                var forward = Tr.forward;
                 forward.y = 0f;
 
                 if (settings.MasterPositionalPower > 0f) {
@@ -68,8 +66,8 @@ namespace DrivingOnNavMesh {
                 }
             }
 
-            tr.position = nextPos;
-            tr.rotation = nextRot;
+            Tr.position = nextPos;
+            Tr.rotation = nextRot;
         }
 
         protected static bool IsSingularWithUp (Vector3 view) {

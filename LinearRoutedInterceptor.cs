@@ -7,18 +7,18 @@ namespace DrivingOnNavMesh {
 
     public class LinearRoutedInterceptor : AbstractRoutetedInterceptor {
 
-        public LinearRoutedInterceptor(Animator anim, Transform tr, DrivingSetting drivingSetting)
-            : base(anim, tr, drivingSetting, new LinearRouter()) {
+        public LinearRoutedInterceptor(RootMotionInterceptor rootMotion)
+            : base(rootMotion, new LinearRouter()) {
         }
 
         #region implemented abstract members of AbstractRoutetedInterceptor
         protected override bool TryToStartNavigationTo(Vector3 destination) {
-            var source = tr.position;
-            var result = router.TryToStartRoute (source, destination);
-			if (result) SetDestination(destination);
-			return result;
+            var source = rootMotion.Tr.position;
+            return router.TryToStartRoute (source, destination);
         }
         protected override void UpdateTarget (Vector3 pointFrom, float t) {
+			var heading = CurrentDestination - pointFrom;
+			rootMotion.SetHeading(heading);
             //SetDestination (CurrentDestination);
         }
         #endregion

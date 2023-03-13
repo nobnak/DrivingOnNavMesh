@@ -11,17 +11,17 @@ namespace DrivingOnNavMesh {
         protected bool approximateStartPoint = true;
         protected bool approximateEndPoint = true;
 
-        public NavigationRoutedInterceptor(Animator anim, Transform tr, DrivingAndPathSetting motionData)
-            : base(anim, tr, motionData, new NavMeshPathRouter()) {
+        public NavigationRoutedInterceptor(RootMotionInterceptor rootMotion, DrivingAndPathSetting motionData)
+            : base(rootMotion, new NavMeshPathRouter()) {
             this.motionData = motionData;
         }
 
         #region implemented abstract members of AbstractRoutetedInterceptor
         protected override bool TryToStartNavigationTo(Vector3 destination) {
-            var source = tr.position;
+            var source = rootMotion.Tr.position;
             if (approximateStartPoint || approximateEndPoint) {
                 NavMeshHit hit;
-                var distance = RADIUS * tr.lossyScale.sqrMagnitude;
+                var distance = RADIUS * rootMotion.Tr.lossyScale.sqrMagnitude;
                 if (approximateStartPoint && NavMesh.SamplePosition (source, out hit, distance, NavMesh.AllAreas))
                     source = hit.position;
                 if (approximateEndPoint && NavMesh.SamplePosition (destination, out hit, distance, NavMesh.AllAreas))
@@ -37,7 +37,7 @@ namespace DrivingOnNavMesh {
             if (toPoint.sqrMagnitude > Mathf.Epsilon) {
                 var distance = toPoint.magnitude;
                 var toPointDir = toPoint.normalized;
-                var angle = 0.5f * (1f - Vector3.Dot (tr.forward, toPointDir));
+                var angle = 0.5f * (1f - Vector3.Dot (rootMotion.Tr.forward, toPointDir));
                 var distantialRatio = motionData.PathFollowingDistanceRatio * distance;
                 var angularRatio = motionData.PathFollowingAngleRatio;
                 var mixRatio = Mathf.Clamp01 (Mathf.Lerp (distantialRatio, angularRatio, angle));
