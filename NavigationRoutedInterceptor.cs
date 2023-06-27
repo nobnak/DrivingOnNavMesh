@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -17,11 +18,11 @@ namespace DrivingOnNavMesh {
         }
 
         #region implemented abstract members of AbstractRoutetedInterceptor
-        protected override bool TryToStartNavigationTo(Vector3 destination) {
-            var source = rootMotion.Tr.position;
+        protected override bool TryToStartNavigationTo(float3 destination) {
+            var source = rootMotion.Tr.Position;
             if (approximateStartPoint || approximateEndPoint) {
                 NavMeshHit hit;
-                var distance = RADIUS * rootMotion.Tr.lossyScale.sqrMagnitude;
+				var distance = RADIUS; // * rootMotion.Tr.lossyScale.sqrMagnitude;
                 if (approximateStartPoint && NavMesh.SamplePosition (source, out hit, distance, NavMesh.AllAreas))
                     source = hit.position;
                 if (approximateEndPoint && NavMesh.SamplePosition (destination, out hit, distance, NavMesh.AllAreas))
@@ -29,19 +30,19 @@ namespace DrivingOnNavMesh {
             }
             return router.TryToStartRoute (source, destination);
         }
-        protected override void UpdateTarget (Vector3 pointFrom, float t) {
+        protected override void UpdateTarget (float3 pointFrom, float t) {
             var pointOn = router.PointAt (t);
             var tangentOn = router.TangentAt (t);
             var toPoint = pointOn - pointFrom;
             var moveBy = motionData.DestinationDistance * tangentOn;
-            if (toPoint.sqrMagnitude > Mathf.Epsilon) {
-                var distance = toPoint.magnitude;
-                var toPointDir = toPoint.normalized;
-                var angle = 0.5f * (1f - Vector3.Dot (rootMotion.Tr.forward, toPointDir));
+            if (math.lengthsq(toPoint) > 1e-4f) {
+                var distance = math.length(toPoint);
+                var toPointDir = math.normalize(toPoint);
+                var angle = 0.5f * (1f - math.dot(rootMotion.Tr.Forward, toPointDir));
                 var distantialRatio = motionData.PathFollowingDistanceRatio * distance;
                 var angularRatio = motionData.PathFollowingAngleRatio;
-                var mixRatio = Mathf.Clamp01 (Mathf.Lerp (distantialRatio, angularRatio, angle));
-                moveBy = motionData.DestinationDistance * Vector3.Lerp (tangentOn, toPointDir, mixRatio);
+                var mixRatio = math.clamp (math.lerp (distantialRatio, angularRatio, angle), 0f, 1f);
+                moveBy = motionData.DestinationDistance * math.lerp(tangentOn, toPointDir, mixRatio);
             }
             SetDestination (pointFrom + moveBy);
         }

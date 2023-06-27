@@ -1,5 +1,7 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -9,14 +11,14 @@ namespace DrivingOnNavMesh {
         protected NavMeshPath navPath;
 
         #region implemented abstract members of AbstractRouter
-        protected override bool TryToFindPath (Vector3 pointFrom, Vector3 pointTo, out Vector3[] path) {
+        protected override bool TryToFindPath (float3 pointFrom, float3 pointTo, out float3[] path) {
             return TryToFindPath (pointFrom, pointTo, out path, NavMesh.AllAreas);
         }
         #endregion
 
-        protected virtual bool TryToFindPath(Vector3 pointFrom, Vector3 pointTo, out Vector3[] path, int area) {
+        protected virtual bool TryToFindPath(float3 pointFrom, float3 pointTo, out float3[] path, int area) {
             var result = NavMesh.CalculatePath (pointFrom, pointTo, area, navPath = new NavMeshPath());
-            path = navPath.corners;
+            path = navPath.corners.Cast<float3>().ToArray();
             return result;
         }
     }

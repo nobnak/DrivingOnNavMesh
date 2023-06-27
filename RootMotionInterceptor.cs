@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using DrivingOnNavMesh.Poses;
+using Unity.Mathematics;
 
 namespace DrivingOnNavMesh {
 
@@ -13,11 +15,11 @@ namespace DrivingOnNavMesh {
 
         protected bool activity;
         protected TargetStateEnum targetState;
-		protected Vector3 heading;
+		protected float3 heading;
 
         protected DrivingSetting settings;
 
-        public RootMotionInterceptor(Animator anim, Transform tr, DrivingSetting settings) {
+        public RootMotionInterceptor(Animator anim, IPose tr, DrivingSetting settings) {
             this.Tr = tr;
             this.anim = anim;
             this.settings = settings;
@@ -25,30 +27,29 @@ namespace DrivingOnNavMesh {
             this.activity = true;
         }
 
-		public virtual void SetHeading(Vector3 heading) {
+		public virtual void SetHeading(float3 heading) {
 			heading.y = 0f;
-			heading.Normalize();
+			heading = math.normalizesafe(heading, Tr.Forward);
 			this.heading = heading;
 		}
         public virtual void SetActive(bool active) {
             this.activity = active;
         }
 
-		public Transform Tr { get; protected set; }
+		public IPose Tr { get; protected set; }
 		public bool IsActive { get { return activity; } }
 
-        public virtual Vector3 Heading() { return heading; }
-        public virtual Vector3 HeadingLocal() { return Tr.InverseTransformDirection(heading); }
+        public virtual float3 Heading() { return heading; }
 
         public virtual void CallbackOnAnimatorMove() {
-            var nextPos = anim.rootPosition;
-            var nextRot = anim.rootRotation;
+            float3 nextPos = anim.rootPosition;
+            quaternion nextRot = anim.rootRotation;
 
             if (IsActive) {
                 var dt = Time.deltaTime * anim.speed;
                 var view = Heading ();
 
-                var forward = Tr.forward;
+                var forward = Tr.Forward;
                 forward.y = 0f;
 
                 if (settings.MasterPositionalPower > 0f) {
@@ -66,8 +67,8 @@ namespace DrivingOnNavMesh {
                 }
             }
 
-            Tr.position = nextPos;
-            Tr.rotation = nextRot;
+            Tr.Position = nextPos;
+            Tr.Rotation = nextRot;
         }
 
         protected static bool IsSingularWithUp (Vector3 view) {

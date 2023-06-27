@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -12,11 +13,11 @@ namespace DrivingOnNavMesh {
         }
 
         #region implemented abstract members of AbstractRoutetedInterceptor
-        protected override bool TryToStartNavigationTo(Vector3 destination) {
-            var source = rootMotion.Tr.position;
+        protected override bool TryToStartNavigationTo(float3 destination) {
+            var source = rootMotion.Tr.Position;
             return router.TryToStartRoute (source, destination);
         }
-        protected override void UpdateTarget (Vector3 pointFrom, float t) {
+        protected override void UpdateTarget (float3 pointFrom, float t) {
 			var heading = CurrentDestination - pointFrom;
 			rootMotion.SetHeading(heading);
             //SetDestination (CurrentDestination);

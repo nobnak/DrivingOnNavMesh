@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -18,7 +19,7 @@ namespace DrivingOnNavMesh {
 
 		protected StateEnum state;
         protected AbstractRouter router;
-		protected Vector3 destination;
+		protected float3 destination;
 
 		protected float acceptableRemainingRatio = 0.05f;
 
@@ -28,14 +29,14 @@ namespace DrivingOnNavMesh {
         }
 
         #region Abstract
-        protected abstract bool TryToStartNavigationTo (Vector3 destination);
-        protected abstract void UpdateTarget (Vector3 pointFrom, float t);
+        protected abstract bool TryToStartNavigationTo (float3 destination);
+        protected abstract void UpdateTarget (float3 pointFrom, float t);
 		#endregion
 
-		public virtual Vector3 CurrentDestination => destination;
-		public virtual bool SetDestination(Vector3 destination) {
+		public virtual float3 CurrentDestination => destination;
+		public virtual bool SetDestination(float3 destination) {
 			this.destination = destination;
-			var heading = destination - rootMotion.Tr.position;
+			var heading = destination - rootMotion.Tr.Position;
 			rootMotion.SetHeading(heading);
 			return true;
 		}
@@ -67,7 +68,7 @@ namespace DrivingOnNavMesh {
             if (state != StateEnum.Navigation)
                 return false;
 
-            var pointFrom = rootMotion.Tr.position;
+            var pointFrom = rootMotion.Tr.Position;
 			var t = router.ClosestT(pointFrom);
 			t = Mathf.Max(t, router.ActiveRange.ActiveRangeBegin);
             if (t < 0f) {
@@ -94,7 +95,7 @@ namespace DrivingOnNavMesh {
         }
         public void DrawTarget() {
             if (rootMotion.IsActive)
-                Gizmos.DrawLine (rootMotion.Tr.position, CurrentDestination);
+                Gizmos.DrawLine (rootMotion.Tr.Position, CurrentDestination);
         }
         public StateEnum CurrentState { get { return state; } }
 

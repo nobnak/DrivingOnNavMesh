@@ -1,5 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -10,17 +11,17 @@ namespace DrivingOnNavMesh {
 
         protected RouteStateEnum state;
 
-        protected Vector3[] path;
-        protected Vector3[] tangents;
+        protected float3[] path;
+        protected float3[] tangents;
         protected float[] lengths;
 
         protected Range activeRange;
 
         #region Abstract
-        protected abstract bool TryToFindPath(Vector3 pointFrom, Vector3 pointTo, out Vector3[] path);
+        protected abstract bool TryToFindPath(float3 pointFrom, float3 pointTo, out float3[] path);
         #endregion
 
-        public virtual bool TryToStartRoute (Vector3 pointFrom, Vector3 pointTo) {
+        public virtual bool TryToStartRoute (Vector3 pointFrom, float3 pointTo) {
             var result = TryToFindPath (pointFrom, pointTo, out path);
             if (result) {
                 SetRouteState (RouteStateEnum.Reacheable);
@@ -33,14 +34,14 @@ namespace DrivingOnNavMesh {
         #region Public
         public virtual Range ActiveRange { get { return activeRange; } }
 
-        public virtual float ClosestT(Vector3 p) {
+        public virtual float ClosestT(float3 p) {
             var minSqrDist = float.MaxValue;
             var minT = -1f;
             var indexBegin = activeRange.IndexBegin;
             var indexEnd = activeRange.IndexEnd;
 
             for (var i = indexBegin; i < indexEnd; i++) {
-                var inext = Mathf.Min (i + 1, indexEnd);
+                var inext = math.min (i + 1, indexEnd);
 
                 var c = path [i];
                 var dir = p - c;
@@ -52,13 +53,13 @@ namespace DrivingOnNavMesh {
                 if (t <= 0f) {
                     t = 0f;
                 } else if (t < 1f) {
-                    c = Vector3.Lerp (c, path [inext], t);
+                    c = math.lerp (c, path [inext], t);
                 } else {
                     t = 1f;
                     c = path [inext];
                 }
 
-                var tentativeSqrDist = (p - c).sqrMagnitude;
+                var tentativeSqrDist = math.lengthsq(p - c);
                 if (tentativeSqrDist < minSqrDist) {
                     minSqrDist = tentativeSqrDist;
                     minT = t + i;
@@ -67,12 +68,12 @@ namespace DrivingOnNavMesh {
 
             return minT;
         }
-        public virtual Vector3 PointAt(float t) {
+        public virtual float3 PointAt(float t) {
             float tlerp;
             var tfloor = Floor (t, out tlerp);
             return activeRange.Lerp(path, tfloor, tlerp);
         }
-        public virtual Vector3 TangentAt(float t) {
+        public virtual float3 TangentAt(float t) {
             float tlerp;
             var tfloor = Floor (t + 0.5f, out tlerp);
             return activeRange.Lerp (tangents, tfloor, tlerp);
@@ -100,26 +101,26 @@ namespace DrivingOnNavMesh {
         #endregion
 
         #region Static
-        protected static void Build(Vector3[] corners, 
-            out Range activeRange, out Vector3[] tangents, out float[] lengths) {
+        protected static void Build(float3[] corners, 
+            out Range activeRange, out float3[] tangents, out float[] lengths) {
             var cornerCount = corners.Length;
 
             activeRange = new Range(cornerCount - 1);
-            tangents = new Vector3[cornerCount + 1];
+            tangents = new float3[cornerCount + 1];
             lengths = new float[cornerCount - 1];
 
             for (var i = 0; i < cornerCount - 1; i++) {
                 var ca = corners [i];
                 var cb = corners [i + 1];
                 var v = cb - ca;
-                lengths [i] = v.magnitude;
-                tangents [i + 1] = v.normalized;
+                lengths [i] = math.length(v);
+                tangents [i + 1] = math.normalize(v);
             }
             tangents [0] = tangents [1];
             tangents [cornerCount] = tangents [cornerCount - 1];
         }
         protected static int Floor (float t, out float tlerp) {
-            var tfloor = Mathf.FloorToInt (t);
+            var tfloor = (int)math.floor(t);
             tlerp = t - tfloor;
             return tfloor;
         }
@@ -147,11 +148,11 @@ namespace DrivingOnNavMesh {
             public float Length { get { return ActiveRangeEnd - ActiveRangeBegin; } }
 
             public void SetActiveRange(float rangeBegin, float rangeEnd) {
-                ActiveRangeBegin = Mathf.Clamp(rangeBegin, min, max);
-                ActiveRangeEnd = Mathf.Clamp(rangeEnd, rangeBegin, max);
+                ActiveRangeBegin = math.clamp(rangeBegin, min, max);
+                ActiveRangeEnd = math.clamp(rangeEnd, rangeBegin, max);
 
-                IndexBegin = Mathf.FloorToInt (ActiveRangeBegin);
-                IndexEnd = Mathf.CeilToInt (ActiveRangeEnd);
+                IndexBegin = (int)math.floor(ActiveRangeBegin);
+                IndexEnd = (int)math.ceil(ActiveRangeEnd);
             }
             public void SetRangeBegin(float begin) {
                 SetActiveRange (begin, ActiveRangeEnd);
@@ -161,23 +162,23 @@ namespace DrivingOnNavMesh {
             }
 
             public float ClampInActive (float t) {
-                return Mathf.Clamp (t, ActiveRangeBegin, ActiveRangeEnd);
+                return math.clamp(t, ActiveRangeBegin, ActiveRangeEnd);
             }
             public float ClampInActive(float t, int index) {
                 return ClampInActive (t + index) - index;
             }
 
             public float Clamp(float t) {
-                return Mathf.Clamp (t, min, max);
+                return math.clamp (t, min, max);
             }
             public int Clamp(int index) {
-                return Mathf.Clamp(index, min, max);
+                return math.clamp(index, min, max);
             }
-            public Vector3 Lerp(IList<Vector3> array, int index, float tlerp) {
+            public float3 Lerp(IList<float3> array, int index, float tlerp) {
                 if (index < 0)
                     return array [0];
                 else if (index < max)
-                    return Vector3.LerpUnclamped (array [index], array [index + 1], tlerp);
+                    return math.lerp(array [index], array [index + 1], tlerp);
                 else
                     return array [max];
             }
