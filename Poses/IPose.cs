@@ -14,5 +14,7 @@ namespace DrivingOnNavMesh.Poses {
 		float3 Forward {
 			get;
 		}
+
+        UnityEngine.Transform GetTransform();
 	}
 }

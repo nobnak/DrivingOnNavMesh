@@ -3,16 +3,17 @@ using UnityEngine;
 
 namespace DrivingOnNavMesh.Poses {
 
-	public class CompositePose : IPose {
+	public class JointPose : IPose {
 
 		protected Transform root;
 		protected Transform[] arms;
 
-		public CompositePose(Transform root, params Transform[] arms) {
+		public JointPose(Transform root, params Transform[] arms) {
 			this.root = root;
 			this.arms = arms;
 		}
 
+		#region IPose
 		public float3 Position {
 			get => root.position;
 			set => root.position = value;
@@ -22,7 +23,10 @@ namespace DrivingOnNavMesh.Poses {
 			set => root.rotation = value;
 		}
 		public float3 Forward => root.forward;
+		public Transform GetTransform() => root;
+		#endregion
 
+		#region interface
 		public void SetPosition(int index, float3 position) {
 			float3 rootPos_wc = root.position;
 
@@ -86,11 +90,23 @@ namespace DrivingOnNavMesh.Poses {
 			return new Arm(index, this);
 		}
 
+		public Transform GetTransform(int index) {
+			Transform result;
+			if (0 <= index && index < arms.Length)
+				result = arms[index].transform;
+			else {
+				Debug.LogWarning($"Index out of range: {index}");
+				result = root.transform;
+			}
+			return result;
+		}
+		#endregion
+
 		public class Arm : IPose {
 			protected int index;
-			protected CompositePose parent;
+			protected JointPose parent;
 
-			public Arm(int index, CompositePose parent) {
+			public Arm(int index, JointPose parent) {
 				this.index = index;
 				this.parent = parent;
 			}
@@ -104,6 +120,7 @@ namespace DrivingOnNavMesh.Poses {
 				set => parent.SetRotation(index, value);
 			}
 			public float3 Forward => parent.GetForward(index);
+			public Transform GetTransform() => parent.GetTransform(index);
 		}
 	}
 }

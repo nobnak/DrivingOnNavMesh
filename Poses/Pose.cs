@@ -3,11 +3,11 @@ using UnityEngine;
 
 namespace DrivingOnNavMesh.Poses {
 
-	public class TransformPose : IPose {
+	public class Pose : IPose {
 
 		protected Transform root;
 
-		public TransformPose(Transform root) {
+		public Pose(Transform root) {
 			this.root = root;
 		}
 
@@ -20,10 +20,11 @@ namespace DrivingOnNavMesh.Poses {
 			set => root.rotation = value;
 		}
 		public float3 Forward => root.forward;
+		public Transform GetTransform() => root;
 
 		#region static
-		public static implicit operator TransformPose(Transform tr) {
-			return new TransformPose(tr);
+		public static implicit operator Pose(Transform tr) {
+			return new Pose(tr);
 		}
 
 		#endregion
