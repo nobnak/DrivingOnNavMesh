@@ -7,20 +7,35 @@ namespace DrivingOnNavMesh.Poses {
 
 		protected Transform root;
 
-		public Pose(Transform root) {
+		public virtual PositionFunc PositionUpdator { get; set; }
+		public virtual RotationFunc RotationUpdator { get; set; }
+
+		public Pose(Transform root, PositionFunc positionUp = null, RotationFunc rotationUp = null) {
 			this.root = root;
+			this.PositionUpdator = positionUp;
+			this.RotationUpdator = rotationUp;
 		}
 
-		public float3 Position {
+		public virtual float3 Position {
 			get => root.position;
-			set => root.position = value;
+			set {
+				if (PositionUpdator != null) 
+					PositionUpdator(root, value);
+				else
+					root.position = value;
+			}
 		}
-		public quaternion Rotation {
+		public virtual quaternion Rotation {
 			get => root.rotation;
-			set => root.rotation = value;
+			set {
+				if (RotationUpdator != null) 
+					RotationUpdator(root, value);
+				else
+					root.rotation = value;
+			}
 		}
-		public float3 Forward => root.forward;
-		public Transform GetTransform() => root;
+		public virtual float3 Forward => root.forward;
+		public virtual Transform GetTransform() => root;
 
 		#region static
 		public static implicit operator Pose(Transform tr) {

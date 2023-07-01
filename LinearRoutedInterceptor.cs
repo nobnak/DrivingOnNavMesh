@@ -14,7 +14,7 @@ namespace DrivingOnNavMesh {
 
         #region implemented abstract members of AbstractRoutetedInterceptor
         protected override bool TryToStartNavigationTo(float3 destination) {
-            var source = rootMotion.Tr.Position;
+            var source = rootMotion.RootPose.Position;
             return router.TryToStartRoute (source, destination);
         }
         protected override void UpdateTarget (float3 pointFrom, float t) {

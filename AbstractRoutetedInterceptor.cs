@@ -36,7 +36,7 @@ namespace DrivingOnNavMesh {
 		public virtual float3 CurrentDestination => destination;
 		public virtual bool SetDestination(float3 destination) {
 			this.destination = destination;
-			var heading = destination - rootMotion.Tr.Position;
+			var heading = destination - rootMotion.RootPose.Position;
 			rootMotion.SetHeading(heading);
 			return true;
 		}
@@ -68,7 +68,7 @@ namespace DrivingOnNavMesh {
             if (state != StateEnum.Navigation)
                 return false;
 
-            var pointFrom = rootMotion.Tr.Position;
+            var pointFrom = rootMotion.RootPose.Position;
 			var t = router.ClosestT(pointFrom);
 			t = Mathf.Max(t, router.ActiveRange.ActiveRangeBegin);
             if (t < 0f) {
@@ -95,7 +95,7 @@ namespace DrivingOnNavMesh {
         }
         public void DrawTarget() {
             if (rootMotion.IsActive)
-                Gizmos.DrawLine (rootMotion.Tr.Position, CurrentDestination);
+                Gizmos.DrawLine (rootMotion.RootPose.Position, CurrentDestination);
         }
         public StateEnum CurrentState { get { return state; } }
 

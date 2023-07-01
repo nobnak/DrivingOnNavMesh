@@ -3,32 +3,21 @@ using UnityEngine;
 
 namespace DrivingOnNavMesh.Poses {
 
-	public class JointPose : IPose {
+	public class JointPose : Pose {
 
-		protected Transform root;
 		protected Transform[] arms;
 
-		public JointPose(Transform root, params Transform[] arms) {
-			this.root = root;
+		public JointPose(Transform root, 
+			PositionFunc positionUp = null, RotationFunc rotationUp = null,
+			params Transform[] arms)
+			: base(root, positionUp, rotationUp) {
 			this.arms = arms;
 		}
 
-		#region IPose
-		public float3 Position {
-			get => root.position;
-			set => root.position = value;
-		}
-		public quaternion Rotation {
-			get => root.rotation;
-			set => root.rotation = value;
-		}
-		public float3 Forward => root.forward;
-		public Transform GetTransform() => root;
-		#endregion
-
 		#region interface
+#if false
 		public void SetPosition(int index, float3 position) {
-			float3 rootPos_wc = root.position;
+			float3 rootPos_wc = Position;
 
 			float3 armPos_wc;
 			if (0 <= index && index < arms.Length)
@@ -39,7 +28,7 @@ namespace DrivingOnNavMesh.Poses {
 			}
 
 			rootPos_wc = (position - armPos_wc) + rootPos_wc;
-			root.position = rootPos_wc;
+			Position = rootPos_wc;
 		}
 		public float3 GetPosition(int index) {
 			float3 armPos_wc;
@@ -47,13 +36,13 @@ namespace DrivingOnNavMesh.Poses {
 				armPos_wc = arms[index].position;
 			else {
 				Debug.LogWarning($"Index out of range: {index}");
-				armPos_wc = root.position;
+				armPos_wc = Position;
 			}
 			return armPos_wc;
 		}
 
 		public void SetRotation(int index, quaternion rotation) {
-			quaternion rootRot_wc = root.rotation;
+			quaternion rootRot_wc = Rotation;
 			quaternion armRot_wc;
 			if (0 <= index && index < arms.Length)
 				armRot_wc = arms[index].rotation;
@@ -61,8 +50,8 @@ namespace DrivingOnNavMesh.Poses {
 				Debug.LogWarning($"Index out of range: {index}");
 				armRot_wc = rootRot_wc;
 			}
-			rootRot_wc = math.mul(rootRot_wc, math.mul(rotation, math.inverse(armRot_wc)));
-			root.rotation = rootRot_wc;
+			rootRot_wc = math.mul(math.mul(math.inverse(armRot_wc), rotation), rootRot_wc);
+			Rotation = rootRot_wc;
 		}
 		public quaternion GetRotation(int index) {
 			quaternion armRot_wc;
@@ -70,10 +59,11 @@ namespace DrivingOnNavMesh.Poses {
 				armRot_wc = arms[index].rotation;
 			else {
 				Debug.LogWarning($"Index out of range: {index}");
-				armRot_wc = root.rotation;
+				armRot_wc = Rotation;
 			}
 			return armRot_wc;
 		}
+#endif
 
 		public float3 GetForward(int index) {
 			float3 armForward_wc;
@@ -100,27 +90,37 @@ namespace DrivingOnNavMesh.Poses {
 			}
 			return result;
 		}
-		#endregion
+#endregion
 
-		public class Arm : IPose {
+		public class Arm : Pose {
 			protected int index;
 			protected JointPose parent;
 
-			public Arm(int index, JointPose parent) {
+			public Arm(int index, JointPose parent) : base(parent.GetTransform(index)) {
 				this.index = index;
 				this.parent = parent;
 			}
 
-			public float3 Position {
-				get => parent.GetPosition(index);
-				set => parent.SetPosition(index, value);
+			public override float3 Position { 
+				get => base.Position; 
+				set {
+					float3 rootPos_wc = parent.Position;
+					float3 armPos_wc = Position;
+
+					rootPos_wc = (value - armPos_wc) + rootPos_wc;
+					parent.Position = rootPos_wc;
+				}
 			}
-			public quaternion Rotation {
-				get => parent.GetRotation(index);
-				set => parent.SetRotation(index, value);
+			public override quaternion Rotation {
+				get => base.Rotation;
+				set {
+					quaternion rootRot_wc = parent.Rotation;
+					quaternion armRot_wc = Rotation;
+
+					rootRot_wc = math.mul(math.mul(math.inverse(armRot_wc), value), rootRot_wc);
+					parent.Rotation = rootRot_wc;
+				}
 			}
-			public float3 Forward => parent.GetForward(index);
-			public Transform GetTransform() => parent.GetTransform(index);
 		}
 	}
 }

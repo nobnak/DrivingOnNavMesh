@@ -19,7 +19,7 @@ namespace DrivingOnNavMesh {
 
         #region implemented abstract members of AbstractRoutetedInterceptor
         protected override bool TryToStartNavigationTo(float3 destination) {
-            var source = rootMotion.Tr.Position;
+            var source = rootMotion.RootPose.Position;
             if (approximateStartPoint || approximateEndPoint) {
                 NavMeshHit hit;
 				var distance = RADIUS; // * rootMotion.Tr.lossyScale.sqrMagnitude;
@@ -38,7 +38,7 @@ namespace DrivingOnNavMesh {
             if (math.lengthsq(toPoint) > 1e-4f) {
                 var distance = math.length(toPoint);
                 var toPointDir = math.normalize(toPoint);
-                var angle = 0.5f * (1f - math.dot(rootMotion.Tr.Forward, toPointDir));
+                var angle = 0.5f * (1f - math.dot(rootMotion.RootPose.Forward, toPointDir));
                 var distantialRatio = motionData.PathFollowingDistanceRatio * distance;
                 var angularRatio = motionData.PathFollowingAngleRatio;
                 var mixRatio = math.clamp (math.lerp (distantialRatio, angularRatio, angle), 0f, 1f);

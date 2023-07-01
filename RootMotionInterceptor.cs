@@ -17,26 +17,32 @@ namespace DrivingOnNavMesh {
         protected TargetStateEnum targetState;
 		protected float3 heading;
 
+		protected IPose rootPose, animationPose;
         protected DrivingSetting settings;
 
-        public RootMotionInterceptor(Animator anim, IPose tr, DrivingSetting settings) {
-            this.Tr = tr;
+        public RootMotionInterceptor(Animator anim, IPose rootPose, IPose animationPose, DrivingSetting settings) {
+            this.rootPose = rootPose;
+			this.animationPose = animationPose;
             this.anim = anim;
             this.settings = settings;
 
             this.activity = true;
         }
 
+		#region properties
+		public IPose RootPose => rootPose;
+		public IPose AnimPose => animationPose;
+		#endregion
+
 		public virtual void SetHeading(float3 heading) {
 			heading.y = 0f;
-			heading = math.normalizesafe(heading, Tr.Forward);
+			heading = math.normalizesafe(heading, RootPose.Forward);
 			this.heading = heading;
 		}
         public virtual void SetActive(bool active) {
             this.activity = active;
         }
 
-		public IPose Tr { get; protected set; }
 		public bool IsActive { get { return activity; } }
 
         public virtual float3 Heading() { return heading; }
@@ -49,7 +55,7 @@ namespace DrivingOnNavMesh {
                 var dt = Time.deltaTime * anim.speed;
                 var view = Heading ();
 
-                var forward = Tr.Forward;
+                var forward = RootPose.Forward;
                 forward.y = 0f;
 
                 if (settings.MasterPositionalPower > 0f) {
@@ -67,8 +73,8 @@ namespace DrivingOnNavMesh {
                 }
             }
 
-            Tr.Position = nextPos;
-            Tr.Rotation = nextRot;
+            animationPose.Position = nextPos;
+			animationPose.Rotation = nextRot;
         }
 
         protected static bool IsSingularWithUp (Vector3 view) {
