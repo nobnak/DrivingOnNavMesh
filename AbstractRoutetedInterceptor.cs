@@ -65,7 +65,7 @@ namespace DrivingOnNavMesh {
             return result;
         }
         public virtual bool Update () {
-            if (state != StateEnum.Navigation)
+            if (state != StateEnum.Navigation || !IsActive)
                 return false;
 
             var pointFrom = rootMotion.RootPose.Position;
