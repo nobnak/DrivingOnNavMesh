@@ -20,13 +20,24 @@ namespace DrivingOnNavMesh {
 		protected IPose rootPose, animationPose;
         protected DrivingSetting settings;
 
-        public RootMotionInterceptor(Animator anim, IPose rootPose, IPose animationPose, DrivingSetting settings) {
+		protected int id_blendDir;
+		protected float blendDir = 0f;
+
+        public RootMotionInterceptor(
+			Animator anim, 
+			IPose rootPose, 
+			IPose animationPose, 
+			DrivingSetting settings,
+			string s_blendDir = "Move_Dir"
+		) {
             this.rootPose = rootPose;
 			this.animationPose = animationPose;
             this.anim = anim;
             this.settings = settings;
 
-            this.activity = true;
+			this.id_blendDir = Animator.StringToHash(s_blendDir);
+
+			this.activity = true;
         }
 
 		#region properties
@@ -63,7 +74,14 @@ namespace DrivingOnNavMesh {
                     nextPos += settings.MasterPositionalPower * dt * dpos;
                 }
 
-                if (settings.MasterRotationalPower > 0f && !IsSingularWithUp (view)) {
+				var angleToView = Vector3.SignedAngle(forward, view, Vector3.up);
+				var blendDirTarget = math.clamp(angleToView / math.max(settings.BlendDirAngle, 0.01f), -1f, 1f);
+				blendDir = math.lerp(blendDir, 0f, math.saturate(dt * math.max(settings.BlendDirPower * 0.1f, 0.01f)));
+				blendDir = math.lerp(blendDir, blendDirTarget, math.saturate(dt * settings.BlendDirPower));
+				anim.SetFloat(id_blendDir, blendDir);
+				//Debug.Log($"BlendDir: {blendDir}, AngleToView: {angleToView}");
+
+				if (settings.MasterRotationalPower > 0f && !IsSingularWithUp (view)) {
                     var targetRotation = Quaternion.LookRotation (view, Vector3.up);
                     var t = Mathf.Lerp (settings.ForwardRotationalPower, settings.BackwardRotationalPower, 
                                 0.5f * (1f - Vector3.Dot (Vector3.forward, view)));
@@ -87,7 +105,7 @@ namespace DrivingOnNavMesh {
             targetState = nextState;
         }
 
-        [System.Serializable]
+		[System.Serializable]
         public class DrivingSetting {
             public float MasterPositionalPower { get; protected set; }
             public float ForwardPositionalPower { get; protected set; }
@@ -99,7 +117,10 @@ namespace DrivingOnNavMesh {
 
             public float CrossRotationalPower { get; protected set; }
 
-            public DrivingSetting() {
+			public float BlendDirAngle = 60f;
+			public float BlendDirPower = 0.5f;
+
+			public DrivingSetting() {
                 this.MasterRotationalPower = 1f;
                 this.MasterPositionalPower = 0f;
                 this.CrossRotationalPower = 0f;                
